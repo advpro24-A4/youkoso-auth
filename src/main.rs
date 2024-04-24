@@ -4,13 +4,12 @@ use crate::utils::config::config;
 use axum::Error;
 use deadpool_diesel::{postgres::Pool, Manager};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use nanoid::nanoid;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utils::router::app_router;
 
 mod models;
+mod modules;
 mod utils;
-
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 
 #[derive(Clone)]
