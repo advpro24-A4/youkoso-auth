@@ -13,10 +13,19 @@ diesel::table! {
     users (id) {
         #[max_length = 255]
         id -> Varchar,
+        role -> Nullable<UserRole>,
         #[max_length = 255]
         email -> Varchar,
         #[max_length = 255]
+        name -> Nullable<Varchar>,
+        #[max_length = 255]
+        username -> Nullable<Varchar>,
+        #[max_length = 255]
         password -> Varchar,
-        role -> Nullable<UserRole>,
+        #[max_length = 255]
+        address -> Nullable<Varchar>,
+        birth_date -> Nullable<Date>,
+        #[max_length = 255]
+        phone_number -> Nullable<Varchar>,
     }
 }
