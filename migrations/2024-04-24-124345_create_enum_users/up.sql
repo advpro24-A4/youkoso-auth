@@ -1,0 +1,3 @@
+CREATE TYPE user_role  AS ENUM ('ADMIN', 'CUSTOMER');
+ALTER TABLE users DROP COLUMN role;
+ALTER TABLE users ADD COLUMN role user_role;
