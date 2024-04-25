@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(Debug, Clone)]
 pub enum UserRole {
     Admin,
     Customer,
