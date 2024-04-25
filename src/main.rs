@@ -9,6 +9,7 @@ use utils::router::app_router;
 
 mod models;
 mod modules;
+mod tests;
 mod utils;
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 
