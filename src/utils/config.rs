@@ -1,6 +1,6 @@
 use std::env;
 
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use tokio::sync::OnceCell;
 
 #[derive(Debug)]

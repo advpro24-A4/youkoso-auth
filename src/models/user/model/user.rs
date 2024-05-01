@@ -1,9 +1,10 @@
-use bcrypt::{hash_with_result, Version, DEFAULT_COST};
+use bcrypt::{hash_with_result, verify, Version, DEFAULT_COST};
+use serde::{Deserialize, Serialize};
 
 use crate::models::enumeration::user_type::UserRole;
 use crate::models::user::model::profile::Profile;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
     id: String,
     email: String,
@@ -26,6 +27,7 @@ pub trait UserTrait {
     fn role(&self) -> &UserRole;
     fn profile(&self) -> &Option<Profile>;
     fn encrypt_password(&self) -> String;
+    fn verify_password(&self, hashed_password: String) -> bool;
 }
 
 impl UserTrait for User {
@@ -67,5 +69,13 @@ impl UserTrait for User {
     fn encrypt_password(&self) -> String {
         let hashed_password = hash_with_result(&self.password, DEFAULT_COST).unwrap();
         hashed_password.format_for_version(Version::TwoB)
+    }
+
+    fn verify_password(&self, hashed_password: String) -> bool {
+        let verified = verify(self.password(), hashed_password.as_str());
+        match verified {
+            Ok(_) => true,
+            Err(_) => false,
+        }
     }
 }

@@ -1,9 +1,8 @@
-use std::net::SocketAddr;
-
 use crate::utils::config::config;
-use axum::Error;
 use deadpool_diesel::{postgres::Pool, Manager};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use std::error::Error;
+use std::net::SocketAddr;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utils::router::app_router;
 
@@ -19,7 +18,7 @@ pub struct AppState {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<(), Box<dyn Error>> {
     init_tracing();
     let config = config().await;
 
