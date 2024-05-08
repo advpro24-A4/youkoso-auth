@@ -8,6 +8,7 @@ use crate::models::user::model::profile::Profile;
 pub struct User {
     id: String,
     email: String,
+    #[serde(skip_serializing)]
     password: String,
     role: UserRole,
     profile: Option<Profile>,

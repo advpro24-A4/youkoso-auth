@@ -10,22 +10,26 @@ pub trait UserBuilderTrait {
     fn with_password(&mut self, password: String) -> &mut Self;
     fn with_role(&mut self, role: UserRole) -> &mut Self;
     fn with_profile(&mut self, profile: Profile) -> &mut Self;
-    fn build(self) -> User;
+    fn with_id(&mut self, id: String) -> &mut Self;
+    fn build(&mut self) -> User;
 }
 
+#[derive(Debug, Clone)]
 pub struct UserBuilder {
+    id: Option<String>,
     email: Option<String>,
     password: Option<String>,
-    role: UserRole,
+    role: Option<UserRole>,
     profile: Option<Profile>,
 }
 
 impl Default for UserBuilder {
     fn default() -> Self {
         UserBuilder {
+            id: None,
             email: None,
             password: None,
-            role: UserRole::User,
+            role: Some(UserRole::User),
             profile: None,
         }
     }
@@ -49,7 +53,7 @@ impl UserBuilderTrait for UserBuilder {
     }
 
     fn with_role(&mut self, role: UserRole) -> &mut Self {
-        self.role = role;
+        self.role = Some(role);
         self
     }
 
@@ -58,13 +62,22 @@ impl UserBuilderTrait for UserBuilder {
         self
     }
 
-    fn build(self) -> User {
+    fn with_id(&mut self, id: String) -> &mut Self {
+        self.id = Some(id);
+        self
+    }
+
+    fn build(&mut self) -> User {
+        let id = match self.id.clone() {
+            Some(id) => id,
+            None => nanoid!(),
+        };
         User::new(
-            nanoid!(),
-            self.email.expect("Email must be filled"),
-            self.password.expect("Password must be filled"),
-            self.role,
-            self.profile,
+            id,
+            self.email.clone().expect("Email must be filled"),
+            self.password.clone().expect("Password must be filled"),
+            self.role.clone().unwrap_or(UserRole::User),
+            self.profile.clone(),
         )
     }
 }

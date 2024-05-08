@@ -13,6 +13,7 @@ pub trait UserDirectorTrait {
         email: String,
         password: String,
     );
+
     fn construct_customer_user(builder: &mut impl UserBuilderTrait, user: User, profile: Profile);
 }
 

@@ -1,5 +1,4 @@
 use diesel::{debug_query, insert_into, pg::Pg, ExpressionMethods};
-use tracing_subscriber::fmt::format;
 
 use crate::models::{
     db::schema::users::dsl::*,
@@ -20,6 +19,17 @@ fn insert_registed_user() {
     );
 
     let registered_user: User = builder.build();
+
+    let role_string = registered_user.role().clone().to_string().to_lowercase();
+
+    let role_query = role_string
+        .chars()
+        .next()
+        .unwrap()
+        .to_uppercase()
+        .chain(role_string.chars().skip(1))
+        .collect::<String>();
+
     let encrypt_password = registered_user.encrypt_password();
     let query = insert_into(users).values((
         id.eq(registered_user.id()),
@@ -28,6 +38,7 @@ fn insert_registed_user() {
         role.eq(registered_user.role()),
     ));
 
-    let sql = format!("INSERT INTO \"users\" (\"id\", \"email\", \"password\", \"role\")  VALUES ($1, $2, $3, $4) -- binds: [\"{}\", \"{}\", \"{}\", {}]", registered_user.id(), registered_user.email(), encrypt_password, registered_user.role().to_string());
-    assert_eq!(sql, debug_query::<Pg, _>(&query).to_string());
+    let sql = format!("INSERT INTO \"users\" (\"id\", \"email\", \"password\", \"role\") VALUES ($1, $2, $3, $4) -- binds: [\"{}\", \"{}\", \"{}\", {}]", registered_user.id(), registered_user.email(), encrypt_password, role_query).to_string();
+    let debug_query = debug_query::<Pg, _>(&query).to_string();
+    assert_eq!(sql, debug_query);
 }

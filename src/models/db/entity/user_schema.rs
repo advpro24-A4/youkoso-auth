@@ -1,19 +1,18 @@
+use crate::models::{db::schema::users, enumeration::user_type::UserRole};
 use chrono::NaiveDate;
-use diesel::{deserialize::Queryable, prelude::Insertable};
-use serde::{Deserialize, Serialize};
+use diesel::{deserialize::Queryable, Selectable};
 
-use crate::models::enumeration::user_type::UserRole;
-
-#[derive(Queryable, Debug, Clone, Insertable, Serialize, Deserialize)]
-#[diesel(table_name=crate::models::db::schema::users)]
-pub struct UserInsertSchema {
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct UserSelectSchema {
     pub id: String,
     pub email: String,
     pub password: String,
-    pub role: Option<UserRole>,
     pub name: Option<String>,
     pub username: Option<String>,
     pub address: Option<String>,
     pub birth_date: Option<NaiveDate>,
     pub phone_number: Option<String>,
+    pub role: Option<UserRole>,
 }

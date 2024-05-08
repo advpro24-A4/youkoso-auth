@@ -1,22 +1,34 @@
+use axum::{http::StatusCode, Json};
+use bcrypt::{verify, BcryptError};
 use deadpool_diesel::postgres::Pool;
 
-use crate::models::user::{
-    builder::user_builder::{UserBuilder, UserBuilderTrait},
-    director::{UserDirector, UserDirectorTrait},
-    model::user::User,
+use crate::{
+    models::user::{
+        builder::user_builder::{UserBuilder, UserBuilderTrait},
+        director::{UserDirector, UserDirectorTrait},
+        model::user::{User, UserTrait},
+    },
+    utils::error::{internal_error, ErrorResponse},
 };
 
 use super::repository::{AuthenticationRepository, AuthenticationRepositoryTrait};
 
 pub trait AuthenticationServiceTrait {
-    fn login(user: User) -> User;
+    fn new() -> Self;
+    async fn login(
+        &self,
+        email: String,
+        password: String,
+        pool: &Pool,
+    ) -> Result<User, (StatusCode, Json<ErrorResponse>)>;
     async fn register(
         &self,
         email: String,
         password: String,
         pool: &Pool,
-    ) -> Result<User, Box<dyn std::error::Error>>;
-    fn verify_password(password: String) -> bool;
+    ) -> Result<User, (StatusCode, Json<ErrorResponse>)>;
+    fn verify_password(&self, password: String, hash_password: String)
+        -> Result<bool, BcryptError>;
 }
 
 trait PrivateAuthenticationServiceTrait {
@@ -35,24 +47,59 @@ impl PrivateAuthenticationServiceTrait for AuthenticationService {
 }
 
 impl AuthenticationServiceTrait for AuthenticationService {
-    fn login(user: User) -> User {
-        unimplemented!()
+    fn new() -> Self {
+        Self {
+            repository: AuthenticationRepository::default(),
+        }
     }
+
+    async fn login(
+        &self,
+        email: String,
+        password: String,
+        pool: &Pool,
+    ) -> Result<User, (StatusCode, Json<ErrorResponse>)> {
+        let repository = self.repository();
+        let user = repository.find_by_email(email, pool).await?;
+        match self.verify_password(password, user.password().to_owned()) {
+            Ok(success) => {
+                if !success {
+                    let status_code = StatusCode::BAD_REQUEST;
+                    return Err((
+                        status_code,
+                        Json(
+                            ErrorResponse::new()
+                                .with_statuscode(status_code)
+                                .with_message("Invalid credentials".to_string())
+                                .build(),
+                        ),
+                    ));
+                }
+                Ok(user)
+            }
+            Err(e) => Err(internal_error(e)),
+        }
+    }
+
     async fn register(
         &self,
         email: String,
         password: String,
         pool: &Pool,
-    ) -> Result<User, Box<dyn std::error::Error>> {
+    ) -> Result<User, (StatusCode, Json<ErrorResponse>)> {
         let repository = self.repository();
         let mut builder = UserBuilder::default();
         _ = UserDirector::construct_register_customer_user(&mut builder, email, password);
         let registered_user: User = builder.build();
-        _ = repository.create_user(&registered_user, pool);
+        _ = repository.create_user(&registered_user, pool).await?;
         Ok(registered_user)
     }
 
-    fn verify_password(password: String) -> bool {
-        unimplemented!()
+    fn verify_password(
+        &self,
+        password: String,
+        hash_password: String,
+    ) -> Result<bool, BcryptError> {
+        verify(password, hash_password.as_str())
     }
 }
