@@ -12,4 +12,5 @@ pub struct LoginDTO {
 pub struct LoginResponse {
     pub message: String,
     pub user: User,
+    pub token: String,
 }

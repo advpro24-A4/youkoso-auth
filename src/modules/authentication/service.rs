@@ -1,4 +1,7 @@
-use axum::{http::StatusCode, Json};
+use axum::{
+    http::{HeaderValue, StatusCode},
+    Json,
+};
 use bcrypt::{verify, BcryptError};
 use deadpool_diesel::postgres::Pool;
 
@@ -29,6 +32,11 @@ pub trait AuthenticationServiceTrait {
     ) -> Result<User, (StatusCode, Json<ErrorResponse>)>;
     fn verify_password(&self, password: String, hash_password: String)
         -> Result<bool, BcryptError>;
+
+    async fn auth(
+        &self,
+        headers: &HeaderValue,
+    ) -> Result<String, (StatusCode, Json<ErrorResponse>)>;
 }
 
 trait PrivateAuthenticationServiceTrait {
@@ -101,5 +109,10 @@ impl AuthenticationServiceTrait for AuthenticationService {
         hash_password: String,
     ) -> Result<bool, BcryptError> {
         verify(password, hash_password.as_str())
+    }
+
+    async fn auth(&self, token: &HeaderValue) -> Result<String, (StatusCode, Json<ErrorResponse>)> {
+        println!("{token:?}");
+        Ok("Aman aja king".to_string())
     }
 }

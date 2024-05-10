@@ -1,7 +1,8 @@
 use axum::{
-    extract::{Form, State},
-    http::StatusCode,
-    routing::post,
+    body::Body,
+    extract::{Form, Request, State},
+    http::{header, StatusCode},
+    routing::{get, post},
     Json, Router,
 };
 
@@ -19,6 +20,7 @@ pub fn auth_routes(state: AppState) -> Router<AppState> {
     Router::new()
         .route("/register", post(register))
         .route("/login", post(login))
+        .route("/verify", get(verify))
         .with_state(state)
 }
 
@@ -48,6 +50,15 @@ async fn login(
     let response: LoginResponse = LoginResponse {
         message: String::from("Success login"),
         user,
+        token: "Halo".to_string(),
     };
     Ok(Json(response))
+}
+
+async fn verify(
+    State(_state): State<AppState>,
+    req: Request<Body>,
+) -> Result<Json<String>, (StatusCode, Json<ErrorResponse>)> {
+    let token = req.headers().get(header::AUTHORIZATION);
+    Ok(Json("Aman aja king".to_string()))
 }

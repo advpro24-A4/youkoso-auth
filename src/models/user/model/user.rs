@@ -40,7 +40,7 @@ impl UserTrait for User {
         profile: Option<Profile>,
     ) -> Self {
         Self {
-            id: id,
+            id,
             email,
             password,
             role,

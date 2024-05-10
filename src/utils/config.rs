@@ -15,9 +15,15 @@ struct ServerConfig {
 }
 
 #[derive(Debug)]
+struct JwtConfig {
+    secret: String,
+}
+
+#[derive(Debug)]
 pub struct Config {
     server: ServerConfig,
     database: DatabaseConfig,
+    jwt: JwtConfig,
 }
 
 impl Config {
@@ -43,9 +49,14 @@ async fn init_config() -> Config {
         url: env::var("DATABASE_URL").expect("DATABASE_URL must set"),
     };
 
+    let jwt_config = JwtConfig {
+        secret: env::var("JWT_SECRET").unwrap_or_else(|_| String::from("default")),
+    };
+
     Config {
         server: server_config,
         database: database_config,
+        jwt: jwt_config,
     }
 }
 

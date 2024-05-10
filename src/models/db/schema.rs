@@ -7,6 +7,19 @@ pub mod sql_types {
 }
 
 diesel::table! {
+    tokens (id) {
+        #[max_length = 255]
+        id -> Varchar,
+        #[max_length = 255]
+        user_id -> Varchar,
+        #[max_length = 255]
+        token -> Varchar,
+        created_at -> Timestamptz,
+        expired_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::UserRole;
 
@@ -29,3 +42,10 @@ diesel::table! {
         phone_number -> Nullable<Varchar>,
     }
 }
+
+diesel::joinable!(tokens -> users (user_id));
+
+diesel::allow_tables_to_appear_in_same_query!(
+    tokens,
+    users,
+);
