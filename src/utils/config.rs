@@ -33,6 +33,9 @@ impl Config {
     pub fn server_host(&self) -> String {
         format!("{}:{}", &self.server.host, &self.server.port)
     }
+    pub fn jwt_secret(&self) -> String {
+        (&self.jwt.secret).to_string()
+    }
 }
 
 pub static CONFIG: OnceCell<Config> = OnceCell::const_new();

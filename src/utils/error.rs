@@ -14,6 +14,31 @@ where
     (status_code, json_response)
 }
 
+pub fn unauthorized_error() -> (StatusCode, Json<ErrorResponse>) {
+    let status_code = StatusCode::UNAUTHORIZED;
+    let error_response = Json(
+        ErrorResponse::new()
+            .with_statuscode(status_code)
+            .with_message("Invalid token".to_string())
+            .build(),
+    );
+    (status_code, error_response)
+}
+
+pub fn unauthorized_error_expired<E>(err: E) -> (StatusCode, Json<ErrorResponse>)
+where
+    E: std::error::Error,
+{
+    let status_code = StatusCode::UNAUTHORIZED;
+    let error_response = Json(
+        ErrorResponse::new()
+            .with_statuscode(status_code)
+            .with_message(err.to_string())
+            .build(),
+    );
+    (status_code, error_response)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorResponse {
     message: Option<String>,

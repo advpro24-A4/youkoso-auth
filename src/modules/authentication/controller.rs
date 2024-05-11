@@ -1,20 +1,27 @@
 use axum::{
     body::Body,
-    extract::{Form, Request, State},
+    extract::{self, Request, State},
     http::{header, StatusCode},
     routing::{get, post},
     Json, Router,
 };
+use validator::Validate;
 
-use crate::{models::user::model::user::UserTrait, utils::error::ErrorResponse, AppState};
+use crate::{
+    models::user::model::user::UserTrait,
+    modules::authentication::service::{AuthenticationService, AuthenticationServiceTrait},
+};
 
-use super::{
-    dto::{
+use crate::{
+    modules::authentication::dto::{
         login::{LoginDTO, LoginResponse},
         register::{RegisterDTO, RegisterResponse},
     },
-    service::{AuthenticationService, AuthenticationServiceTrait},
+    utils::error::ErrorResponse,
+    AppState,
 };
+
+use super::dto::verify::VerifyResponse;
 
 pub fn auth_routes(state: AppState) -> Router<AppState> {
     Router::new()
@@ -26,39 +33,73 @@ pub fn auth_routes(state: AppState) -> Router<AppState> {
 
 async fn register(
     State(state): State<AppState>,
-    Form(request): Form<RegisterDTO>,
+    extract::Json(request): extract::Json<RegisterDTO>,
 ) -> Result<Json<RegisterResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let service = AuthenticationService::new();
-    let user = service
-        .register(request.email, request.password, &state.pool)
-        .await?;
-    let response: RegisterResponse = RegisterResponse {
-        email: user.email().to_owned(),
-        message: String::from("Success register"),
-    };
-    Ok(Json(response))
+    match request.validate() {
+        Ok(_) => {
+            let service = AuthenticationService::new();
+            let user = service
+                .register(request.email, request.password, &state.pool)
+                .await?;
+            let response: RegisterResponse = RegisterResponse {
+                email: user.email().to_owned(),
+                message: String::from("Success register"),
+            };
+            Ok(Json(response))
+        }
+        Err(e) => {
+            let status_code = StatusCode::BAD_REQUEST;
+            let error = Json(
+                ErrorResponse::new()
+                    .with_message(e.to_string())
+                    .with_statuscode(status_code)
+                    .build(),
+            );
+            Err((status_code, error))
+        }
+    }
 }
 
 async fn login(
     State(state): State<AppState>,
-    Form(request): Form<LoginDTO>,
+    extract::Json(request): extract::Json<LoginDTO>,
 ) -> Result<Json<LoginResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let service = AuthenticationService::new();
-    let user = service
-        .login(request.email, request.password, &state.pool)
-        .await?;
-    let response: LoginResponse = LoginResponse {
-        message: String::from("Success login"),
-        user,
-        token: "Halo".to_string(),
-    };
-    Ok(Json(response))
+    match request.validate() {
+        Ok(_) => {
+            let service = AuthenticationService::new();
+            let user = service
+                .login(request.email, request.password, &state.pool)
+                .await?;
+            let token = service.create_token(&user, &state.pool).await?;
+            let response: LoginResponse = LoginResponse {
+                message: String::from("Success login"),
+                user,
+                token,
+            };
+            Ok(Json(response))
+        }
+        Err(e) => {
+            let status_code = StatusCode::BAD_REQUEST;
+            let error = Json(
+                ErrorResponse::new()
+                    .with_message(e.to_string())
+                    .with_statuscode(status_code)
+                    .build(),
+            );
+            Err((status_code, error))
+        }
+    }
 }
 
 async fn verify(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     req: Request<Body>,
-) -> Result<Json<String>, (StatusCode, Json<ErrorResponse>)> {
-    let token = req.headers().get(header::AUTHORIZATION);
-    Ok(Json("Aman aja king".to_string()))
+) -> Result<Json<VerifyResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let service = AuthenticationService::new();
+    let header_token = req.headers().get(header::AUTHORIZATION);
+    let user = service.auth(header_token, &state.pool).await?;
+    Ok(Json(VerifyResponse {
+        message: "Success get user".to_string(),
+        user,
+    }))
 }
