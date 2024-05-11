@@ -1,4 +1,8 @@
-use bcrypt::{hash_with_result, verify, Version, DEFAULT_COST};
+use argon2::password_hash::PasswordHasher;
+use argon2::{
+    password_hash::{rand_core::OsRng, SaltString},
+    Argon2,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::models::enumeration::user_type::UserRole;
@@ -28,7 +32,6 @@ pub trait UserTrait {
     fn role(&self) -> &UserRole;
     fn profile(&self) -> &Option<Profile>;
     fn encrypt_password(&self) -> String;
-    fn verify_password(&self, hashed_password: String) -> bool;
 }
 
 impl UserTrait for User {
@@ -68,15 +71,13 @@ impl UserTrait for User {
         &self.profile
     }
     fn encrypt_password(&self) -> String {
-        let hashed_password = hash_with_result(&self.password, DEFAULT_COST).unwrap();
-        hashed_password.format_for_version(Version::TwoB)
-    }
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
 
-    fn verify_password(&self, hashed_password: String) -> bool {
-        let verified = verify(self.password(), hashed_password.as_str());
-        match verified {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        let hashed_password = argon2
+            .hash_password(self.password.as_ref(), &salt)
+            .unwrap()
+            .to_string();
+        hashed_password
     }
 }

@@ -15,6 +15,13 @@ pub trait UserDirectorTrait {
     );
 
     fn construct_customer_user(builder: &mut impl UserBuilderTrait, user: User, profile: Profile);
+
+    fn construct_register_customer_user_id(
+        builder: &mut impl UserBuilderTrait,
+        id: String,
+        email: String,
+        password: String,
+    );
 }
 
 impl UserDirectorTrait for UserDirector {
@@ -34,6 +41,20 @@ impl UserDirectorTrait for UserDirector {
             .with_password(password)
             .with_role(UserRole::Customer);
     }
+
+    fn construct_register_customer_user_id(
+        builder: &mut impl UserBuilderTrait,
+        id: String,
+        email: String,
+        password: String,
+    ) {
+        builder
+            .with_id(id)
+            .with_email(email)
+            .with_password(password)
+            .with_role(UserRole::Customer);
+    }
+
     fn construct_customer_user(builder: &mut impl UserBuilderTrait, user: User, profile: Profile) {
         builder
             .with_user(user)
