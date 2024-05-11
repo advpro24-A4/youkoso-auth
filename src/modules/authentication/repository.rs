@@ -15,7 +15,7 @@ use crate::{
 use axum::{http::StatusCode, Json};
 use chrono::NaiveDateTime;
 use deadpool_diesel::postgres::Pool;
-use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
+use diesel::{insert_into, update, ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
 use nanoid::nanoid;
 
 use crate::models::user::model::user::{User, UserTrait};
@@ -44,6 +44,11 @@ pub trait AuthenticationRepositoryTrait {
         exp: NaiveDateTime,
         pool: &Pool,
     ) -> Result<Token, (StatusCode, Json<ErrorResponse>)>;
+    async fn revoke_token(
+        &self,
+        token: String,
+        pool: &Pool,
+    ) -> Result<(), (StatusCode, Json<ErrorResponse>)>;
 }
 
 #[derive(Debug, Clone, Default)]
@@ -265,6 +270,27 @@ impl AuthenticationRepositoryTrait for AuthenticationRepository {
                 let json_response = Json(error_response);
                 Err((status_code, json_response))
             }
+        }
+    }
+
+    async fn revoke_token(
+        &self,
+        token: String,
+        pool: &Pool,
+    ) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+        let conn = pool.get().await.map_err(internal_error)?;
+        let res = conn
+            .interact(move |conn| {
+                update(tokens::table)
+                    .filter(tokens::dsl::token.eq(token))
+                    .set(tokens::status.eq("REVOKED".to_string()))
+                    .get_result::<Token>(conn)
+            })
+            .await
+            .map_err(internal_error)?;
+        match res {
+            Ok(_) => Ok(()),
+            Err(err) => return Err(internal_error(err)),
         }
     }
 }

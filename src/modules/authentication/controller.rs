@@ -21,13 +21,14 @@ use crate::{
     AppState,
 };
 
-use super::dto::verify::VerifyResponse;
+use super::dto::{logout::LogoutResponse, verify::VerifyResponse};
 
 pub fn auth_routes(state: AppState) -> Router<AppState> {
     Router::new()
         .route("/register", post(register))
         .route("/login", post(login))
         .route("/verify", get(verify))
+        .route("/logout", get(logout))
         .with_state(state)
 }
 
@@ -101,5 +102,17 @@ async fn verify(
     Ok(Json(VerifyResponse {
         message: "Success get user".to_string(),
         user,
+    }))
+}
+
+async fn logout(
+    State(state): State<AppState>,
+    req: Request<Body>,
+) -> Result<Json<LogoutResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let service = AuthenticationService::new();
+    let header_token = req.headers().get(header::AUTHORIZATION);
+    _ = service.logout(header_token, &state.pool).await?;
+    Ok(Json(LogoutResponse {
+        message: "success logout, see you later".to_string(),
     }))
 }

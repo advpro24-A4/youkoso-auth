@@ -53,6 +53,11 @@ pub trait AuthenticationServiceTrait {
         user: &User,
         pool: &Pool,
     ) -> Result<String, (StatusCode, Json<ErrorResponse>)>;
+    async fn logout(
+        &self,
+        token_header: Option<&HeaderValue>,
+        pool: &Pool,
+    ) -> Result<(), (StatusCode, Json<ErrorResponse>)>;
 }
 
 trait PrivateAuthenticationServiceTrait {
@@ -170,5 +175,23 @@ impl AuthenticationServiceTrait for AuthenticationService {
             .create_token(user, &token, now, expired, pool)
             .await?;
         Ok(return_token.token)
+    }
+
+    async fn logout(
+        &self,
+        token_header: Option<&HeaderValue>,
+        pool: &Pool,
+    ) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+        let token = match token_header {
+            Some(header) => header.to_str().map_err(|_| unauthorized_error())?,
+            None => return Err(unauthorized_error()),
+        };
+        if !token.starts_with("Bearer") {
+            return Err(unauthorized_error());
+        }
+        let token = token[7..].trim().to_owned();
+        let repository = self.repository();
+        _ = repository.revoke_token(token, pool);
+        Ok(())
     }
 }
