@@ -16,6 +16,8 @@ diesel::table! {
         token -> Varchar,
         created_at -> Timestamptz,
         expired_at -> Timestamptz,
+        #[max_length = 255]
+        status -> Varchar,
     }
 }
 
@@ -26,7 +28,7 @@ diesel::table! {
     users (id) {
         #[max_length = 255]
         id -> Varchar,
-        role -> Nullable<UserRole>,
+        role -> UserRole,
         #[max_length = 255]
         email -> Varchar,
         #[max_length = 255]
