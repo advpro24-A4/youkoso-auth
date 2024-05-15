@@ -191,7 +191,7 @@ impl AuthenticationServiceTrait for AuthenticationService {
         }
         let token = token[7..].trim().to_owned();
         let repository = self.repository();
-        _ = repository.revoke_token(token, pool);
+        _ = repository.revoke_token(token, pool).await?;
         Ok(())
     }
 }
