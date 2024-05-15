@@ -8,7 +8,7 @@ COPY . .
 # Will build and cache the binary and dependent crates in release mode
 RUN --mount=type=cache,target=/usr/local/cargo,from=rust:latest,source=/usr/local/cargo \
     --mount=type=cache,target=target \
-    cargo build --release && mv ./target/release/youkoso_auth ./youkoso_auth
+    cargo build --release && mv ./target/release/youkoso-auth ./youkoso-auth
 
 FROM debian:bookworm-slim
 
@@ -23,7 +23,7 @@ USER app
 WORKDIR /app
 
 #Run
-COPY --from=builder /usr/src/app/youkoso_auth /app/youkoso_auth
+COPY --from=builder /usr/src/app/youkoso-auth /app/youkoso-auth
 
 # Run apps
 CMD ./youkoso_auth
