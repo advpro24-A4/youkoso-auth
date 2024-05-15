@@ -26,4 +26,4 @@ WORKDIR /app
 COPY --from=builder /usr/src/app/youkoso-auth /app/youkoso-auth
 
 # Run apps
-CMD ./youkoso_auth
+CMD ./youkoso-auth
